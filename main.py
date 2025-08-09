@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException
-from schemas import GenreURLChoices, Band
+from fastapi import FastAPI, HTTPException 
+from schemas import GenreURLChoices, Band, Album
 
 app = FastAPI()
 
@@ -53,10 +53,23 @@ BANDS = [
 ]
 
 @app.get("/bands")
-async def bands() -> list[Band]:
-    return [
-        Band(**b) for b in BANDS
-    ]
+async def bands(
+    genre: GenreURLChoices | None = None,
+    has_albums: bool = False
+    ) -> list[Band]:
+
+    band_list = [Band(**b) for b in BANDS]
+
+    if genre:
+        band_list = [
+            b for b in band_list if b.genre.lower() ==  genre.value
+        ]
+
+    if has_albums:
+        band_list = [
+            a for a in band_list if len(a.albums) > 0
+        ]
+    return band_list
 
 
 @app.get("/band/{band_id}")
@@ -67,8 +80,3 @@ async def band(band_id: int) -> Band:
     return band 
 
  
-@app.get("/bands/genre/{genre}")
-async def bands_for_genre(genre: GenreURLChoices) -> list[dict]:
-    return [
-        b for b in BANDS if b['genre'].lower() == genre.value 
-    ]
